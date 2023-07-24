@@ -1,134 +1,72 @@
-use std::collections::HashMap;
-use std::time::Instant;
-
-use pixels::wgpu::Color;
-use winit::event_loop::EventLoop;
-use winit::event::{Event, WindowEvent, VirtualKeyCode};
-use winit::window::WindowBuilder;
-use winit::dpi::LogicalSize;
-
-use winit_input_helper::WinitInputHelper;
-
-use pixels::{Error, Pixels, SurfaceTexture};
-
-use crate::graphics::*;
-use crate::raytracing::*;
+use sdl2::pixels::Color; 
+use sdl2::event::Event;
+use sdl2::keyboard::Keycode;
+use std::time::Duration;
 
 pub mod graphics;
 pub mod raytracing;
 
-// TODO switch graphics backend to SDL2
+use crate::graphics::*;
+use crate::raytracing::*;
 
 fn main() {
     
-    // this array is too big and causes a stack overflow
     let mut screen: PixelBuf = Vec::with_capacity(SCREEN_HEIGHT * SCREEN_WIDTH);
     unsafe { screen.set_len(SCREEN_HEIGHT * SCREEN_WIDTH) };
 
-    // time for fps counter
-    let mut time: Instant = Instant::now();
-    let mut old_time: Instant = Instant::now();
-
-    // setup winit
-    let event_loop = EventLoop::new();
-
-    let window = WindowBuilder::new()
-        .with_title("Raytracer")
-        .with_inner_size(LogicalSize::new(SCREEN_WIDTH as u32, SCREEN_HEIGHT as u32))
-        .with_resizable(true)
-        .build(&event_loop)
-        .expect("Unable to create window.");
-
-    let mut winit_input = WinitInputHelper::new();
-
-    let mut pixels = {
-        let window_size = window.inner_size();
-        let surface_texture = SurfaceTexture::new(window_size.width, window_size.height, &window);
-        Pixels::new(SCREEN_WIDTH as u32, SCREEN_HEIGHT as u32, surface_texture).unwrap()
-    };
-
-    // raytracing init
     let scene = Scene::init();
+    update(&mut screen, &scene);
 
-    event_loop.run(move |event, _, control_flow| {
+    let sdl_ctx = sdl2::init().unwrap();
+    let video = sdl_ctx.video().unwrap();
 
-        //control_flow.set_poll();
-        if winit_input.update(&event) {
+    let window = video.window("SDL2 Test", SCREEN_WIDTH as u32, SCREEN_HEIGHT as u32)
+        .position_centered()
+        .build()
+        .expect("Unable to build window");
 
-            let delta_time = (time.elapsed().as_secs_f64() - old_time.elapsed().as_secs_f64()).abs();
+    let mut canvas = window.into_canvas().build().unwrap();
 
-            //input(&mut player, &winit_input, delta_time);
+    canvas.set_draw_color(Color::RGB(0, 255, 25));
+    canvas.clear();
+    canvas.present();
 
-            if winit_input.key_pressed(VirtualKeyCode::Escape) {
-                control_flow.set_exit();
-            }
+    let mut event_pump = sdl_ctx.event_pump().unwrap();
 
-        }
+    for (i, colour) in screen.iter().enumerate() {
 
-        match event {
-            Event::MainEventsCleared => {
-                window.request_redraw();
-            },
-            Event::RedrawRequested(_) => {
+        let x = i % SCREEN_WIDTH;
+        let y = i / SCREEN_WIDTH;
 
-                time = Instant::now();
+        canvas.set_draw_color(Color::RGB(colour[0], colour[1], colour[2]));
+        canvas.draw_point((x as i32, y as i32)).unwrap();
 
-                let delta_time = (time.elapsed().as_secs_f64() - old_time.elapsed().as_secs_f64()).abs();
+    }
 
-                // clear frame so theres no ghosting (like what you see when you noclip through the map in half-life)
-                //screen.iter_mut().for_each(|x| *x = [0xff, 0xff, 0xff, 0xff]);
+    'main: loop {
+        /*
+        i = (i + 1) % 255;
+        canvas.set_draw_color(Color::RGB(i, 64, 255 - 1));
+        canvas.clear();
+        */
 
-                //update(&mut screen, &mut player, delta_time);
+        canvas.set_draw_color(Color::WHITE);
+        //canvas.clear();
 
-                update(&mut screen, &scene);
-
-                //screen.iter_mut().map(|x| *x = pack_colour(0xff, 0x8a, 0x8a));
-
-                render(&screen, pixels.get_frame_mut());
-
-                /*
-                for pixel in pixels.get_frame_mut().chunks_exact_mut(4) {
-                    pixel.copy_from_slice(&[0x5e, 0x48, 0xe8, 0xff]);
+        for event in event_pump.poll_iter() {
+            match  event {
+                Event::Quit {..} |
+                Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
+                    break 'main
                 }
-                */
-
-                pixels.render().expect("Render failed");
-
-                old_time = time;
-
-                //println!("FPS: {}", 1.0 / (delta_time * -1.0));
-
-            },
-            Event::WindowEvent { event: window_event, .. } => match window_event {
-                WindowEvent::CloseRequested => control_flow.set_exit(),
-                //WindowEvent::Resized(new_size) => pixels.resize_surface(new_size.width, new_size.height).unwrap(),
-                _ => ()
-            },
-            _ => ()
+                _ => {}
+            }
         }
 
-    })
+        
+        canvas.present();
 
-}
-
-fn render(framebuffer: &PixelBuf, render_buffer: &mut [u8]) {
-
-    //println!("render");
-
-    for (i, pixel) in render_buffer.chunks_exact_mut(4).enumerate() {
-        let x = (i % SCREEN_WIDTH) as usize;
-        let y = (i / SCREEN_HEIGHT) as usize;
-
-        let index = x + y * SCREEN_WIDTH;
-
-        if index >= framebuffer.len() {
-            continue;
-        }
-
-        let pixel_colour = framebuffer[index];
-
-        pixel.copy_from_slice(&pixel_colour);
-
+        std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 120));
     }
 
 }

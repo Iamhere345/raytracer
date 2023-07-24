@@ -1,3 +1,7 @@
+use sdl2::render::Canvas;
+use sdl2::video::Window;
+use sdl2::pixels::Color;
+
 use crate::graphics::*;
 
 const VIEWPORT_WIDTH: f32 = 1.0;
@@ -7,15 +11,17 @@ const VIEWPORT_DIST: f32 = 1.0;
 pub struct Sphere {
     pos: Point<f32>,
     radius: f32,
-    colour: CanvasColour
+    colour: CanvasColour,
+    name: String
 }
 
 impl Sphere {
-    pub fn new(pos: Point<f32>, radius: f32, colour: CanvasColour) -> Self {
+    pub fn new(pos: Point<f32>, radius: f32, colour: CanvasColour, name: String) -> Self {
         Self {
             pos: pos,
             radius: radius,
-            colour: colour
+            colour: colour,
+            name: name
         }
     }
 }
@@ -28,9 +34,9 @@ impl Scene {
     pub fn init() -> Scene {
         Scene {
             objects: vec![
-                Sphere::new(Point::<f32>::new(0.0, -1.0, 3.0), 4.0, CanvasColour::from((255, 0, 0))),
-                Sphere::new(Point::<f32>::new(1.0, -0.5, 2.0), 3.0, CanvasColour::from((0, 255, 0))),
-                Sphere::new(Point::<f32>::new(1.0, -0.5, 2.0), 3.0, CanvasColour::from((0, 0, 255))),
+                Sphere::new(Point::<f32>::new(0.0, -1.0, 3.0), 1.0, CanvasColour::new(255, 0, 0), "sphere1".to_string()),
+                Sphere::new(Point::<f32>::new(2.0, 0.0, 4.0), 1.0, CanvasColour::new(0, 255, 0), "sphere2".to_string()),
+                Sphere::new(Point::<f32>::new(-2.0, 0.0, 4.0), 3.0, CanvasColour::new(0, 0, 255), "sphere3".to_string()),
             ]
         }
     }
@@ -45,6 +51,8 @@ pub fn update(screen: &mut PixelBuf, scene: &Scene) {
 
             let ray_dir = canvas_to_viewport(x, y);
             let colour = trace_ray(camera, &scene, ray_dir, 1.0, f32::INFINITY);
+
+            //println!("{:?}", colour);
 
             put_pixel(screen, x, y, colour);
 
@@ -80,9 +88,12 @@ fn trace_ray(camera: Point<f32>, scene: &Scene, dir: Point<f32>, t_min: f32, t_m
 
     // if the ray didn't hit any sphere
     if closest_sphere.is_none() {
-        return CanvasColour::from((255, 255, 255));
+        return CanvasColour::WHITE;
     }
 
+    //println!("hit sphere {} (colour {:?})", closest_sphere.unwrap().name, closest_sphere.unwrap().colour);
+
+    // hit sphere
     return closest_sphere.unwrap().colour;
 
 }

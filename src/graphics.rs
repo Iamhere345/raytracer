@@ -6,7 +6,7 @@ pub const SCREEN_HEIGHT: usize = 1080;
 pub const CANVAS_WIDTH: i32 = 1920;
 pub const CANVAS_HEIGHT: i32 = 1080;
 
-pub type PixelColour = [u8; 4];
+pub type PixelColour = [u8; 3];
 pub type PixelBuf = Vec<PixelColour>;
 
 #[derive(Clone, Copy, Debug)]
@@ -17,16 +17,19 @@ pub struct CanvasColour {
 }
 
 impl CanvasColour {
-    pub fn new(r: u8, g: u8, b: u8) -> Self {
+    pub const fn new(r: u8, g: u8, b: u8) -> Self {
         Self {
             r: r,
             g: g,
             b: b
         }
     }
-    fn to_pixel_colour(self) -> PixelColour {
-        [self.r, self.g, self.b, 255]
+
+    const fn as_pixels(self) -> PixelColour {
+        [self.r, self.g, self.b]
     }
+
+    pub const WHITE: CanvasColour = CanvasColour::new(255, 255, 255);
 }
 
 impl From<(u8, u8, u8)> for CanvasColour {
@@ -133,13 +136,18 @@ pub fn put_pixel(framebuffer: &mut PixelBuf, x: i32, y: i32, colour: CanvasColou
 
     //println!("draw at ({x}, {y})");
 
-    let screen_x: usize = ((CANVAS_WIDTH / 2) - x) as usize;
-    let screen_y: usize = ((CANVAS_HEIGHT / 2) - y) as usize;
+    let screen_x: i32 = ((CANVAS_WIDTH / 2) - x) as i32;
+    let screen_y: i32 = ((CANVAS_HEIGHT / 2) - y) as i32;
 
-    println!("draw at ({screen_x}, {screen_y}) with {:?}", colour);
+    //println!("draw at ({screen_x}, {screen_y}) with {:?}", colour);
 
     //framebuffer[1919 + 1089 * SCREEN_WIDTH] = colour.to_pixel_colour();
 
-    framebuffer[screen_x + screen_y * SCREEN_HEIGHT] = colour.to_pixel_colour();
+    framebuffer[((screen_x - 1) + (screen_y - 1) * SCREEN_WIDTH as i32) as usize] = colour.as_pixels();
+
+    //println!("draw colour {:?}", colour);
+
+    //canvas.set_draw_color(colour);
+    //canvas.draw_point((screen_x, screen_y)).unwrap();
 
 }
