@@ -1,7 +1,3 @@
-use sdl2::render::Canvas;
-use sdl2::video::Window;
-use sdl2::pixels::Color;
-
 use crate::graphics::*;
 
 const VIEWPORT_WIDTH: f32 = 1.0;
@@ -12,6 +8,7 @@ pub struct Sphere {
     pos: Point<f32>,
     radius: f32,
     colour: CanvasColour,
+    #[allow(dead_code)]
     name: String
 }
 
@@ -36,7 +33,7 @@ impl Scene {
             objects: vec![
                 Sphere::new(Point::<f32>::new(0.0, -1.0, 3.0), 1.0, CanvasColour::new(255, 0, 0), "sphere1".to_string()),
                 Sphere::new(Point::<f32>::new(2.0, 0.0, 4.0), 1.0, CanvasColour::new(0, 255, 0), "sphere2".to_string()),
-                Sphere::new(Point::<f32>::new(-2.0, 0.0, 4.0), 3.0, CanvasColour::new(0, 0, 255), "sphere3".to_string()),
+                Sphere::new(Point::<f32>::new(-2.0, 0.0, 4.0), 1.0, CanvasColour::new(0, 0, 255), "sphere3".to_string()),
             ]
         }
     }
@@ -73,7 +70,7 @@ fn trace_ray(camera: Point<f32>, scene: &Scene, dir: Point<f32>, t_min: f32, t_m
     for sphere in scene.objects.iter() {
         let (t1, t2) = intersect_ray_sphere(camera, dir, sphere);
 
-        if (t1 > t_min && t1 < t_max) && t1 < closest_t {
+        if (t1 >= t_min && t1 <= t_max) && t1 < closest_t {
             closest_t = t1;
             closest_sphere = Some(&sphere);
         }
@@ -82,7 +79,6 @@ fn trace_ray(camera: Point<f32>, scene: &Scene, dir: Point<f32>, t_min: f32, t_m
             closest_t = t2;
             closest_sphere = Some(&sphere);
         }
-
 
     }
 
@@ -110,7 +106,7 @@ fn intersect_ray_sphere(camera: Point<f32>, dir: Point<f32>, sphere: &Sphere) ->
     let b = co.dot(dir) * 2.0;
     let c = co.dot(co) - r*r;
 
-    let descriminant = b * b - 4.0 * a * c;
+    let descriminant = b*b - 4.0*a*c;
     if descriminant < 0.0 {
         return (f32::INFINITY, f32::INFINITY);
     }

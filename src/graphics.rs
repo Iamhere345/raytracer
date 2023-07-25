@@ -1,10 +1,10 @@
 use std::ops::{Add, Sub, Mul};
 
-pub const SCREEN_WIDTH: usize = 1920;
-pub const SCREEN_HEIGHT: usize = 1080;
+pub const CANVAS_WIDTH: i32 = 600;
+pub const CANVAS_HEIGHT: i32 = 600;
 
-pub const CANVAS_WIDTH: i32 = 1920;
-pub const CANVAS_HEIGHT: i32 = 1080;
+pub const SCREEN_WIDTH: usize = CANVAS_WIDTH as usize;
+pub const SCREEN_HEIGHT: usize = CANVAS_HEIGHT as usize;
 
 pub type PixelColour = [u8; 3];
 pub type PixelBuf = Vec<PixelColour>;

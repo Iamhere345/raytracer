@@ -20,7 +20,7 @@ fn main() {
     let sdl_ctx = sdl2::init().unwrap();
     let video = sdl_ctx.video().unwrap();
 
-    let window = video.window("SDL2 Test", SCREEN_WIDTH as u32, SCREEN_HEIGHT as u32)
+    let window = video.window("Raytracing", SCREEN_WIDTH as u32, SCREEN_HEIGHT as u32)
         .position_centered()
         .build()
         .expect("Unable to build window");
@@ -54,7 +54,7 @@ fn main() {
         //canvas.clear();
 
         for event in event_pump.poll_iter() {
-            match  event {
+            match event {
                 Event::Quit {..} |
                 Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
                     break 'main
