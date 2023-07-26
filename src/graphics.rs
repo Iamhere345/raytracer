@@ -1,4 +1,4 @@
-use std::ops::{Add, Sub, Mul};
+use std::ops::{Add, Sub, Mul, Div};
 
 pub const CANVAS_WIDTH: i32 = 600;
 pub const CANVAS_HEIGHT: i32 = 600;
@@ -32,6 +32,20 @@ impl CanvasColour {
     pub const WHITE: CanvasColour = CanvasColour::new(255, 255, 255);
 }
 
+impl Mul<f32> for CanvasColour {
+
+    type Output = Self;
+
+    fn mul(self, mul: f32) -> Self::Output {
+        Self {
+            r: (self.r as f32 * mul) as u8,
+            g: (self.g as f32 * mul) as u8,
+            b: (self.b as f32 * mul) as u8,
+        }
+    }
+
+}
+
 impl From<(u8, u8, u8)> for CanvasColour {
     fn from(colour: (u8, u8, u8)) -> Self {
         Self::new(colour.0, colour.1, colour.2)
@@ -45,7 +59,7 @@ pub struct Point<T> {
     z: T
 }
 
-impl<T: Mul<Output = T> + Add<Output = T>> Point<T> {
+impl<T: Mul<Output = T> + Add<Output = T> + Div<Output = T> + Copy> Point<T> {
     pub fn new(x: T, y: T, z: T) -> Self {
         Self {
             x: x,
@@ -57,7 +71,39 @@ impl<T: Mul<Output = T> + Add<Output = T>> Point<T> {
     pub fn dot(self, other: Self) -> T {
         self.x * other.x + self.y * other.y + self.z * other.z
     }
+
+    pub fn mul_scalar(self, mul: &T) -> Self {
+        Point {
+            // i hate this
+            x: self.x * *mul,
+            y: self.y * *mul,
+            z: self.z * *mul
+        }
+    }
+
 }
+
+impl Point<f32> {
+    pub fn len(self) -> f32 {
+        (self.x.powi(2) + self.y.powi(2) + self.z.powi(2)).sqrt()
+    }
+}
+
+impl<T: Div<Output = T> + Copy> Div<T> for Point<T> {
+
+    type Output = Self;
+
+    fn div(self, other: T) -> Self::Output {
+        Self {
+            x: self.x / other,
+            y: self.y / other,
+            z: self.z / other
+        }
+    }
+
+}
+
+// TODO: impl Sub<T>, Add<T>, Mul<T> and Div<T> for Point<T>
 
 impl<T: Sub<Output = T>> Sub for Point<T> {
 
